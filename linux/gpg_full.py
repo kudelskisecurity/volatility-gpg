@@ -9,7 +9,8 @@ from volatility3.framework.renderers import format_hints
 from volatility3.plugins.linux import pslist
 from volatility3.framework.exceptions import PagedInvalidAddressException
 
-from cryptography.hazmat.primitives.keywrap import aes_key_unwrap
+from cryptography.hazmat.primitives.keywrap import aes_key_unwrap, InvalidUnwrap
+from time import strftime, localtime, time
 
 sbox = [0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67,
         0x2b, 0xfe, 0xd7, 0xab, 0x76, 0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59,
@@ -114,14 +115,17 @@ class GPGItem(plugins.PluginInterface):
             ```
 
             """
-            regex_pattern = b'.{3}\x61\x00\x00\x00\x00.{3}\x61\x00\x00\x00\x00\x58\x02\x00\x00'
             epoch = self.config.get("epoch")
-            if epoch:
-                print(f"Searching around epoch: {epoch}")
-                byt = (epoch >> 24).to_bytes(5, "little")
-                regex_pattern = b'.{3}' + byt + b'.{3}' + byt + b'\x58\x02\x00\x00'
+            if epoch is None:
+                epoch = int(time())
+            epoch_start = strftime("%d %b %Y %H:%M:%S", localtime(epoch))
+            epoch_end = strftime("%d %b %Y %H:%M:%S", localtime(epoch + 0xffffff))
+            print(f"Searching from {epoch_start} to {epoch_end}")
+            byt = (epoch >> 24).to_bytes(5, "little")
+            regex_pattern = b'.{3}' + byt + b'.{3}' + byt + b'\x58\x02\x00\x00'
             byteorder = "little"
 
+            cache_list = []
             for offset in layer.scan(
                     context=context,
                     scanner=scanners.RegExScanner(pattern=regex_pattern),
@@ -146,32 +150,39 @@ class GPGItem(plugins.PluginInterface):
                 except PagedInvalidAddressException:
                     continue
                 secret_size = int.from_bytes(secret_length, byteorder=byteorder, signed=False)
-
                 secret_bytes = layer.read(offset=secret_data_s_addr + 4, length=secret_size)
+                cache_list.append(secret_bytes)
 
-                """
-                Decrypt secret_bytes with aes key unwrap
+            """
+            Decrypt secret_bytes with aes key unwrap
 
-                ```
-                struct secret_data_s {
-                   int  totallen; /* This includes the padding and space for AESWRAP. */
-                   char data[1];  /* A string.  */
-                };
-                ```
+            ```
+            struct secret_data_s {
+                int  totallen; /* This includes the padding and space for AESWRAP. */
+                char data[1];  /* A string.  */
+            };
+            ```
 
-                """
-                for (section_offset, section_length) in memory_sections:
-                    section_data = layer.read(offset=section_offset, length=section_length, pad=True)
-                    if fast_mode and section_length > 1000000:
-                        continue
-                    for i in range(0, len(section_data) - 176):
-                        if validSchedule(section_data[i:i + 176]):
-                            private_key = section_data[i:i + 16]
+            """
+            for (section_offset, section_length) in memory_sections:
+                section_data = layer.read(offset=section_offset, length=section_length, pad=True)
+                if fast_mode and section_length > 1000000:
+                    continue
+                for i in range(0, len(section_data) - 176):
+                    if validSchedule(section_data[i:i + 176]):
+                        private_key = section_data[i:i + 16]
+
+                        for secret_bytes in cache_list:
                             plaintext = self.get_plaintext(private_key, secret_bytes)
-                            yield format_hints.Hex(offset), private_key.hex(), str(secret_size), plaintext.decode()
+                            if plaintext != None:
+                                yield format_hints.Hex(offset), private_key.hex(), str(secret_size), plaintext.decode()
 
     def get_plaintext(self, private_key, secret_bytes):
-        return aes_key_unwrap(private_key, secret_bytes)
+        try:
+            result = aes_key_unwrap(private_key, secret_bytes)
+        except InvalidUnwrap:
+            result = None # Integrity check failed we skip this result.
+        return result
 
     def _generator(self, tasks):
         for offset, passphrase, secret_size, plaintext in self.locate_timestamps(self.context, tasks):
