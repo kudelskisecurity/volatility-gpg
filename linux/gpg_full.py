@@ -7,6 +7,7 @@ from volatility3.framework.layers import scanners
 from volatility3.framework.objects import utility
 from volatility3.framework.renderers import format_hints
 from volatility3.plugins.linux import pslist
+from volatility3.framework.exceptions import PagedInvalidAddressException
 
 from cryptography.hazmat.primitives.keywrap import aes_key_unwrap
 
@@ -98,7 +99,7 @@ class GPGItem(plugins.PluginInterface):
 
             """
             Regex pattern to search for the two time_t (created and accessed) and ttl in memory they are defined like that:
-            
+
             ```
             struct cache_item_s {
                ITEM next;
@@ -111,16 +112,14 @@ class GPGItem(plugins.PluginInterface):
                char key[1];
             };
             ```
-            
+
             """
             regex_pattern = b'.{3}\x61\x00\x00\x00\x00.{3}\x61\x00\x00\x00\x00\x58\x02\x00\x00'
             epoch = self.config.get("epoch")
             if epoch:
                 print(f"Searching around epoch: {epoch}")
                 byt = (epoch >> 24).to_bytes(5, "little")
-                print(f"byte: {byt}")
                 regex_pattern = b'.{3}' + byt + b'.{3}' + byt + b'\x58\x02\x00\x00'
-                print(regex_pattern)
             byteorder = "little"
 
             for offset in layer.scan(
@@ -142,16 +141,25 @@ class GPGItem(plugins.PluginInterface):
                     continue
 
                 # now we try to read at that address, we should find the totallen
-                secret_length = layer.read(offset=secret_data_s_addr, length=4)
+                try:
+                    secret_length = layer.read(offset=secret_data_s_addr, length=4)
+                except PagedInvalidAddressException:
+                    continue
                 secret_size = int.from_bytes(secret_length, byteorder=byteorder, signed=False)
 
                 secret_bytes = layer.read(offset=secret_data_s_addr + 4, length=secret_size)
 
-                # decrypt secret_bytes with aes key unwrap
-                # struct secret_data_s {
-                #    int  totallen; /* This includes the padding and space for AESWRAP. */
-                #    char data[1];  /* A string.  */
-                # };
+                """
+                Decrypt secret_bytes with aes key unwrap
+
+                ```
+                struct secret_data_s {
+                   int  totallen; /* This includes the padding and space for AESWRAP. */
+                   char data[1];  /* A string.  */
+                };
+                ```
+
+                """
                 for (section_offset, section_length) in memory_sections:
                     section_data = layer.read(offset=section_offset, length=section_length, pad=True)
                     if fast_mode and section_length > 1000000:
