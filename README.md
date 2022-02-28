@@ -2,7 +2,7 @@
 
 This repository contains volatility3 plugins that can retrieve partial and full gpg passphrases.
 
-`gpg_partial.py` may retrieve at most 8 characters from a passphrase for gnupg version.
+`gpg_partial.py` may retrieve at most 8 characters from a passphrase for gnupg using versions of libgrypt older than 1.8.9.
 
 ## Usage
 

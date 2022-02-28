@@ -7,19 +7,20 @@ from volatility3.framework.layers import scanners
 from volatility3.framework.objects import utility
 from volatility3.plugins.linux import pslist
 
+
 class GPGPassphrase(interfaces.plugins.PluginInterface):
     _required_framework_version = (2, 0, 0)
 
     @classmethod
     def get_requirements(cls) -> List[interfaces.configuration.RequirementInterface]:
-        return [#requirements.TranslationLayerRequirement(name='primary', description='Memory layer to scan'),
-                requirements.ModuleRequirement(name = 'kernel', description = 'Linux kernel',
-                                           architectures = ["Intel32", "Intel64"]),
-                requirements.PluginRequirement(name = 'pslist', plugin = pslist.PsList, version = (2, 0, 0)),
-                requirements.ListRequirement(name = 'pid',
-                                         element_type = int,
-                                         description = "Process IDs to include (all other processes are excluded)",
-                                         optional = True)]
+        return [  # requirements.TranslationLayerRequirement(name='primary', description='Memory layer to scan'),
+            requirements.ModuleRequirement(name='kernel', description='Linux kernel',
+                                           architectures=["Intel32", "Intel64"]),
+            requirements.PluginRequirement(name='pslist', plugin=pslist.PsList, version=(2, 0, 0)),
+            requirements.ListRequirement(name='pid',
+                                         element_type=int,
+                                         description="Process IDs to include (all other processes are excluded)",
+                                         optional=True)]
 
     @classmethod
     def locate_gpg_passphrases(cls, context: interfaces.context.ContextInterface, layer_name: str, sections):
@@ -50,16 +51,16 @@ class GPGPassphrase(interfaces.plugins.PluginInterface):
             layer = self.context.layers[proc_layer_name]
             memory_sections = list(task.get_process_memory_sections(heap_only=False))
 
-            for offset, passphrase in self.locate_gpg_passphrases(self.context, 
-                                                                    layer.name, 
-                                                                    memory_sections):
+            for offset, passphrase in self.locate_gpg_passphrases(self.context,
+                                                                  layer.name,
+                                                                  memory_sections):
                 yield 0, (offset, passphrase)
 
     def run(self) -> interfaces.renderers.TreeGrid:
         filter_func = pslist.PsList.create_pid_filter(self.config.get('pid', None))
-        return renderers.TreeGrid([("Offset", format_hints.Hex), 
-                                    ("Partial GPG passphrase (max 8 chars)", str)], 
-                                    self._generator(pslist.PsList.list_tasks(self.context,
-                                                    self.config['kernel'],
-                                                    filter_func = filter_func))
-                                )
+        return renderers.TreeGrid([("Offset", format_hints.Hex),
+                                   ("Partial GPG passphrase (max 8 chars)", str)],
+                                  self._generator(pslist.PsList.list_tasks(self.context,
+                                                                           self.config['kernel'],
+                                                                           filter_func=filter_func))
+                                  )

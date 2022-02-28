@@ -35,20 +35,22 @@ sbox = [0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67,
         0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0,
         0x54, 0xbb, 0x16]
 
+
 def validSchedule(buf):
     # First round
-    word1 = buf[16] == (buf[0] ^ sbox[buf[13]] ^ 1)     
+    word1 = buf[16] == (buf[0] ^ sbox[buf[13]] ^ 1)
     word1 = word1 and buf[17] == (buf[1] ^ sbox[buf[14]])
     word1 = word1 and buf[18] == (buf[2] ^ sbox[buf[15]])
     word1 = word1 and buf[19] == (buf[3] ^ sbox[buf[12]])
 
     # Second round
-    word2 = buf[20] == (buf[4] ^ buf[16]) 
+    word2 = buf[20] == (buf[4] ^ buf[16])
     word2 = word2 and buf[21] == (buf[5] ^ buf[17])
     word2 = word2 and buf[22] == (buf[6] ^ buf[18])
     word2 = word2 and buf[23] == (buf[7] ^ buf[19])
 
     return word1 and word2
+
 
 class GPGItem(plugins.PluginInterface):
     '''Extracts and decrypts gpg-agent cache items'''
@@ -69,7 +71,12 @@ class GPGItem(plugins.PluginInterface):
             requirements.BooleanRequirement(name="fast",
                                             description="Skip large sections",
                                             default=False,
-                                            optional=True)
+                                            optional=True),
+            requirements.IntRequirement(name="epoch",
+                                        description='Unix epoch around which the memory capture was performed. This '
+                                                    'is important as memory will be searched for timestamps at which '
+                                                    'entries were created or accessed by gnupg.',
+                                        optional=True)
         ]
 
     def locate_timestamps(self, context: interfaces.context.ContextInterface, tasks):
@@ -89,18 +96,31 @@ class GPGItem(plugins.PluginInterface):
             layer = self.context.layers[proc_layer_name]
             memory_sections = list(task.get_process_memory_sections(heap_only=False))
 
-            # search for the two time_t and ttl in memory they are defined like that:
-            #struct cache_item_s {
-            #    ITEM next;
-            #    time_t created;
-            #    time_t accessed;  /* Not updated for CACHE_MODE_DATA */
-            #    int ttl;  /* max. lifetime given in seconds, -1 one means infinite */
-            #    struct secret_data_s *pw;
-            #    cache_mode_t cache_mode;
-            #    int restricted;  /* The value of ctrl->restricted is part of the key.  */
-            #    char key[1];
-            #};
+            """
+            Regex pattern to search for the two time_t (created and accessed) and ttl in memory they are defined like that:
+            
+            ```
+            struct cache_item_s {
+               ITEM next;
+               time_t created;
+               time_t accessed;  /* Not updated for CACHE_MODE_DATA */
+               int ttl;  /* max. lifetime given in seconds, -1 one means infinite */
+               struct secret_data_s *pw;
+               cache_mode_t cache_mode;
+               int restricted;  /* The value of ctrl->restricted is part of the key.  */
+               char key[1];
+            };
+            ```
+            
+            """
             regex_pattern = b'.{3}\x61\x00\x00\x00\x00.{3}\x61\x00\x00\x00\x00\x58\x02\x00\x00'
+            epoch = self.config.get("epoch")
+            if epoch:
+                print(f"Searching around epoch: {epoch}")
+                byt = (epoch >> 24).to_bytes(5, "little")
+                print(f"byte: {byt}")
+                regex_pattern = b'.{3}' + byt + b'.{3}' + byt + b'\x58\x02\x00\x00'
+                print(regex_pattern)
             byteorder = "little"
 
             for offset in layer.scan(
@@ -115,7 +135,7 @@ class GPGItem(plugins.PluginInterface):
                 if accessed < created:
                     print("Error: created timestamp > accessed timestamp")
                     continue
-                
+
                 # convert that address to int
                 secret_data_s_addr = int.from_bytes(secret_data_s_addr_bytes, byteorder=byteorder, signed=False)
                 if secret_data_s_addr == 0:
@@ -128,10 +148,10 @@ class GPGItem(plugins.PluginInterface):
                 secret_bytes = layer.read(offset=secret_data_s_addr + 4, length=secret_size)
 
                 # decrypt secret_bytes with aes key unwrap
-                #struct secret_data_s {
+                # struct secret_data_s {
                 #    int  totallen; /* This includes the padding and space for AESWRAP. */
                 #    char data[1];  /* A string.  */
-                #};
+                # };
                 for (section_offset, section_length) in memory_sections:
                     section_data = layer.read(offset=section_offset, length=section_length, pad=True)
                     if fast_mode and section_length > 1000000:
