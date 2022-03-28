@@ -1,5 +1,7 @@
 # Volatility3 gpg passphrase recovery plugin
 
+[![Python 3.6+](https://img.shields.io/badge/python-3.6+-green.svg)](https://docs.python.org/3.6/whatsnew/) [![License: GPL v3](https://img.shields.io/badge/license-GPL%20v3-blue.svg)](http://www.gnu.org/licenses/gpl-3.0)
+
 This repository contains Volatility3 plugins that can retrieve partial and full gpg passphrases from `gpg-agent`'s cache.
 
 `gpg_partial.py` may retrieve at most 8 characters from a passphrase for gnupg using versions of libgcrypt [older than 1.8.9](https://dev.gnupg.org/T5597).
