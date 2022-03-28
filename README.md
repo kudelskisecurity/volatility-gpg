@@ -60,3 +60,10 @@ Searching from 28 Nov 2021 14:51:24 to 10 Jun 2022 20:11:39
 0x7fb048002578  788dc61976e3ac8e9e10d7b80b3e7b40        32      verylongpassphrase*!!
 ```
 
+# License
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License version 3 as published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/.
