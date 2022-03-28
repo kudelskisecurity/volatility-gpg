@@ -18,7 +18,6 @@ Make sure to use the latest git version of volatility3: https://github.com/volat
 mkdir ~/git
 cd ~/git
 git clone https://github.com/volatilityfoundation/volatility3
-
 ```
 
 ### Usage
@@ -32,7 +31,7 @@ gpg --symmetric --cipher-algo AES-256 -o out.enc cleartext.txt
 gpg -d out.enc
 ```
 
-We chose a passphrase that is longer than 8 characters: `verylongpassphrase*!!`.
+For this example, we chose a passphrase that is longer than 8 characters: `verylongpassphrase*!!`.
 
 A memory dump can be obtained, for example, using [LiME](https://github.com/504ensicsLabs/LiME).
 Volatility3 will also require the corresponding symbols, which can be generated [as explained here](https://volatility3.readthedocs.io/en/latest/symbol-tables.html).
