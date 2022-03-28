@@ -1,14 +1,25 @@
 # Volatility3 gpg passphrase recovery plugin
 
-This repository contains volatility3 plugins that can retrieve partial and full gpg passphrases.
+This repository contains Volatility3 plugins that can retrieve partial and full gpg passphrases from `gpg-agent`'s cache.
 
-`gpg_partial.py` may retrieve at most 8 characters from a passphrase for gnupg using versions of libgrypt older than 1.8.9.
+`gpg_partial.py` may retrieve at most 8 characters from a passphrase for gnupg using versions of libgcrypt [older than 1.8.9](https://dev.gnupg.org/T5597).
 
-## Usage
+## Installation
 
-Pass this directory (or simply this directory) using the `-p` option when using volatility (see examples below).
+Pass this directory as plugin directory using the `-p` option when using volatility3 (see examples below).
 
-### Examples
+Use either the `linux.gpg_partial` or the `linux.gpg_full` plugins.
+
+Make sure to use the latest git version of volatility3: https://github.com/volatilityfoundation/volatility3
+
+```
+mkdir ~/git
+cd ~/git
+git clone https://github.com/volatilityfoundation/volatility3
+
+```
+
+### Usage
 
 
 Just before capturing the memory dump, a file was symmetrically encrypted with gpg. When prompted, we enter a passphrase of our choice:
@@ -19,25 +30,33 @@ gpg --symmetric --cipher-algo AES-256 -o out.enc cleartext.txt
 gpg -d out.enc
 ```
 
-Here the passphrase was `verylongpassphrase*!!`. Only the first 8 characters can be retrieved:
+We chose a passphrase that is longer than 8 characters: `verylongpassphrase*!!`.
+
+A memory dump can be obtained, for example, using [LiME](https://github.com/504ensicsLabs/LiME).
+Volatility3 will also require the corresponding symbols, which can be generated [as explained here](https://volatility3.readthedocs.io/en/latest/symbol-tables.html).
+
+Using the `gpg_partial` plugin, only the first 8 characters can be retrieved:
 
 ```
-$ vol -f memdump-gpg-verylongpassphrasestarexclexcl -s symbols/ -p ~/git/gpg-mem-forensics/volatility-gpg/ linux.gpg_passphrase
-Volatility 3 Framework 1.0.1
+$ ~/git/volatility3/vol.py -f memdump-gpg-verylongpassphrasestarexclexcl -s symbols/ -p ~/git/volatility-gpg/ linux.gpg_partial
+Volatility 3 Framework 2.0.0
 Progress:  100.00               Stacking attempts finished                 
 Offset  Partial GPG passphrase (max 8 chars)
 
-0x6a032a0       verylong
-0x10a4b300      verylong
-```
-
-Here the passphrase is `dapass42`, since it's no more than 8 characters, it can be fully retrieved:
+0x7fb04caee2a0  verylong
 
 ```
-$ vol -f memdump-gpg-dapass42 -s symbols/ -p ~/git/gpg-mem-forensics/volatility-gpg/ linux.gpg_passphrase
-Volatility 3 Framework 1.0.1
+
+With the `gpg_full` plugin, the full passphrase can be retrieved:
+
+```
+$ ~/git/volatility3/vol.py -f memdump-gpg-verylongpassphrasestarexclexcl -s symbols/ -p ~/git/volatility-gpg/ linux.gpg_full --fast --epoch 1638107484
+Volatility 3 Framework 2.0.0
 Progress:  100.00               Stacking attempts finished                 
-Offset  Partial GPG passphrase (max 8 chars)
+Offset  Private key     Secret size     Plaintext
+Searching from 28 Nov 2021 14:51:24 to 10 Jun 2022 20:11:39
 
-0x6a032a0       dapass42
+0x7fb048002578  788dc61976e3ac8e9e10d7b80b3e7b40        32      verylongpassphrase*!!
+0x7fb048002578  788dc61976e3ac8e9e10d7b80b3e7b40        32      verylongpassphrase*!!
 ```
+
