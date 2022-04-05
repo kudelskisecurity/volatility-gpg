@@ -63,6 +63,8 @@ Searching from 28 Nov 2021 14:51:24 to 10 Jun 2022 20:11:39
 0x7fb048002578  788dc61976e3ac8e9e10d7b80b3e7b40        32      verylongpassphrase*!!
 ```
 
+The estimated epoch number as to be given as a paramter for which the item was created. By default it uses the current time.
+
 # License
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License version 3 as published by the Free Software Foundation.
