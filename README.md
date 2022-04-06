@@ -63,7 +63,9 @@ Searching from 28 Nov 2021 14:51:24 to 10 Jun 2022 20:11:39
 0x7fb048002578  788dc61976e3ac8e9e10d7b80b3e7b40        32      verylongpassphrase*!!
 ```
 
-The estimated epoch number as to be given as a paramter for which the item was created. By default it uses the current time.
+The estimated epoch time around which the gpg-agent cache item was created can be passed as a parameter using the `--epoch` option.
+If it is not passed, the current time is used by default.
+Note that it is important to pass the right epoch time because only cache items created in the searched time range may be recovered.
 
 # License
 
