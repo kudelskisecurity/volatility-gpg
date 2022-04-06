@@ -38,20 +38,19 @@ sbox = [0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67,
         0x54, 0xbb, 0x16]
 
 
-def validSchedule(buf):
-    # First round
-    word1 = buf[16] == (buf[0] ^ sbox[buf[13]] ^ 1)
-    word1 = word1 and buf[17] == (buf[1] ^ sbox[buf[14]])
-    word1 = word1 and buf[18] == (buf[2] ^ sbox[buf[15]])
-    word1 = word1 and buf[19] == (buf[3] ^ sbox[buf[12]])
-
-    # Second round
-    word2 = buf[20] == (buf[4] ^ buf[16])
-    word2 = word2 and buf[21] == (buf[5] ^ buf[17])
-    word2 = word2 and buf[22] == (buf[6] ^ buf[18])
-    word2 = word2 and buf[23] == (buf[7] ^ buf[19])
-
-    return word1 and word2
+def valid_schedule(buf):
+    return (
+            # First round
+            buf[16] == (buf[0] ^ sbox[buf[13]] ^ 1)
+            and buf[17] == (buf[1] ^ sbox[buf[14]])
+            and buf[18] == (buf[2] ^ sbox[buf[15]])
+            and buf[19] == (buf[3] ^ sbox[buf[12]])
+            # Second round
+            and buf[20] == (buf[4] ^ buf[16])
+            and buf[21] == (buf[5] ^ buf[17])
+            and buf[22] == (buf[6] ^ buf[18])
+            and buf[23] == (buf[7] ^ buf[19])
+    )
 
 
 class GPGItem(plugins.PluginInterface):
@@ -169,7 +168,7 @@ class GPGItem(plugins.PluginInterface):
                 if fast_mode and section_length > 1000000:
                     continue
                 for i in range(0, len(section_data) - 176):
-                    if validSchedule(section_data[i:i + 176]):
+                    if valid_schedule(section_data[i:i + 176]):
                         private_key = section_data[i:i + 16]
 
                         for secret_bytes in cache_list:
@@ -181,7 +180,7 @@ class GPGItem(plugins.PluginInterface):
         try:
             result = aes_key_unwrap(private_key, secret_bytes)
         except InvalidUnwrap:
-            result = None # Integrity check failed we skip this result.
+            result = None  # Integrity check failed we skip this result.
         return result
 
     def _generator(self, tasks):
