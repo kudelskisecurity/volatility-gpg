@@ -40,16 +40,16 @@ sbox = [0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67,
 
 def valid_schedule(buf):
     return (
-            # First round
-            buf[16] == (buf[0] ^ sbox[buf[13]] ^ 1)
-            and buf[17] == (buf[1] ^ sbox[buf[14]])
-            and buf[18] == (buf[2] ^ sbox[buf[15]])
-            and buf[19] == (buf[3] ^ sbox[buf[12]])
-            # Second round
-            and buf[20] == (buf[4] ^ buf[16])
-            and buf[21] == (buf[5] ^ buf[17])
-            and buf[22] == (buf[6] ^ buf[18])
-            and buf[23] == (buf[7] ^ buf[19])
+        # First round
+        buf[16] == (buf[0] ^ sbox[buf[13]] ^ 1)
+        and buf[17] == (buf[1] ^ sbox[buf[14]])
+        and buf[18] == (buf[2] ^ sbox[buf[15]])
+        and buf[19] == (buf[3] ^ sbox[buf[12]])
+        # Second round
+        and buf[20] == (buf[4] ^ buf[16])
+        and buf[21] == (buf[5] ^ buf[17])
+        and buf[22] == (buf[6] ^ buf[18])
+        and buf[23] == (buf[7] ^ buf[19])
     )
 
 
@@ -98,7 +98,8 @@ class GPGItem(plugins.PluginInterface):
             memory_sections = list(task.get_process_memory_sections(heap_only=False))
 
             """
-            Regex pattern to search for the two time_t (created and accessed) and ttl in memory they are defined like that:
+            Regex pattern to search for the two time_t (created and accessed) and ttl in memory.
+            They are defined like that:
 
             ```
             struct cache_item_s {
@@ -173,7 +174,7 @@ class GPGItem(plugins.PluginInterface):
 
                         for secret_bytes in cache_list:
                             plaintext = self.get_plaintext(private_key, secret_bytes)
-                            if plaintext != None:
+                            if plaintext is not None:
                                 yield format_hints.Hex(offset), private_key.hex(), str(secret_size), plaintext.decode()
 
     def get_plaintext(self, private_key, secret_bytes):
