@@ -1,3 +1,5 @@
+![Asciinema demo](gpg-demo-typed-window.svg)
+
 # Volatility3 gpg passphrase recovery plugin
 
 [![Python 3.6+](https://img.shields.io/badge/python-3.6+-green.svg)](https://docs.python.org/3.6/whatsnew/) [![License: GPL v3](https://img.shields.io/badge/license-GPL%20v3-blue.svg)](http://www.gnu.org/licenses/gpl-3.0)
