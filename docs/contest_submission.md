@@ -12,6 +12,8 @@ encapsulates such key material before storing it in memory.
 
 We wrote two Volatility3 plugins to demonstrate how to retrieve passphrases and encryption keys in cache from a memory dump.
 
+The full description of the cache encryption is given in the paper joint to this email which we have presented during the SSTIC and NullCon conferences (https://nullcon.net/berlin-2022/GPG-memory-forensics).
+
 ## GPG passphrase recovery plugin
 
 ### gpg_partial 
