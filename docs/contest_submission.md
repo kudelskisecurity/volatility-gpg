@@ -16,7 +16,7 @@ The full description of the cache encryption is given in the paper joint to this
 
 ## GPG passphrase recovery plugin
 
-We developed two plugins for Volatility3 available at https://github.com/kudelskisecurity/volatility-gpg
+We developed two plugins for Volatility3 available at https://github.com/kudelskisecurity/volatility-gpg which have been tested with Volatility3 framework version 2.4.0.
 
 ### gpg_partial
 
@@ -57,3 +57,5 @@ using the --epoch option. If it is not passed, the current time is used by defau
 to pass the right epoch time because only cache items created in the searched time range may be recovered.
 
 ## Why we should win the contest?
+
+We have used the Volatility3 framework to demonstrate how the cache of GnuPG can be analyzed to decrypt and recover passphrases stored. By publishing our plugin code, we would like to help the forensic community during their analysis works. We hope this would give a starting point for people who want to analyze other solutions caching secret in memory in an unsafe way.
