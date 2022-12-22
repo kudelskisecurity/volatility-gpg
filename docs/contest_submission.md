@@ -4,15 +4,19 @@
 
 ## Abstract
 
-Data decryption with GnuPG works the following: The first time the decryption is called, the system asks the user for their passphrase to decrypt the private key needed to decrypt the file.
-Then for the subsequent decryptions, the passphrase is not asked but read from cache. This mechanism is also used for symmetric-key encryption.
+Data decryption with GnuPG works as following: The first time the decryption function is called, the system 
+asks the user for their passphrase to decrypt the private key needed to decrypt the file.
+Then, for the subsequent calls, the passphrase is not asked anymore but directly read from cache.
+This mechanism is also used for symmetric-key encryption.
 
-The cache time to live has a default value of 10 minutes. After the time to live elapsed, the cached item is cleared from memory. To avoid having key material directly in cleartext in memory, GPG
+Cached items have a default time to live value of 10 minutes. After the time to live elapses, the cached item 
+is cleared from memory. To avoid having key material directly in cleartext in memory, GPG
 encapsulates such key material before storing it in memory.
 
 We wrote two Volatility3 plugins to demonstrate how to retrieve passphrases and encryption keys in cache from a memory dump.
 
-The full description of the cache encryption is given in the paper joint to this email which we have presented during the SSTIC and NullCon conferences (https://nullcon.net/berlin-2022/GPG-memory-forensics).
+The full description of the cache encryption is given in the paper attached to this email, which we have presented 
+during the SSTIC and NullCon conferences (https://nullcon.net/berlin-2022/GPG-memory-forensics).
 
 ## GPG passphrase recovery plugin
 
@@ -40,6 +44,7 @@ The first 8 bytes of the passphrase were found in clear in memory.
 The second plugin retrieves cached items in memory and cache encryption keys and therefore helps recover plaintexts.
 An example of usage is shown below, where the plugin successfully found the entire passphrase `verylongpassphrase*!!` 
 in memory. The first plugin execution took 6.4 seconds and the second 59.7 seconds on an Intel Core i7-7600U CPU for a 1GB RAM dump.
+With the `--fast` flag, this time significantly goes down, but some memory sections are skipped.
 
 ```
 $ ~/git/volatility3/vol.py -f memdump-gpg-verylongpassphrasestarexclexcl -s symbols/ -p ~/git/volatility-gpg/ linux.gpg_full --fast --epoch 1638107484
