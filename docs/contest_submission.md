@@ -58,4 +58,8 @@ to pass the right epoch time because only cache items created in the searched ti
 
 ## Why we should win the contest?
 
-We have used the Volatility3 framework to demonstrate how the cache of GnuPG can be analyzed to decrypt and recover passphrases stored. By publishing our plugin code, we would like to help the forensic community during their analysis works. We hope this would give a starting point for people who want to analyze other solutions caching secret in memory in an unsafe way.
+We have used the Volatility3 framework to demonstrate how the cache of GnuPG can be analyzed to decrypt and recover 
+passphrases stored. By publishing our plugin code, we would like to help the forensics community by making their 
+work easier. We hope this gives a starting point for people who want to analyze other solutions 
+caching secrets in memory in an unsafe way.
+GPG is a widely used software, and we think that these plugins can therefore help a wide array of people.
