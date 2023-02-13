@@ -10,7 +10,7 @@ from volatility3.plugins.linux import pslist
 from volatility3.framework.exceptions import PagedInvalidAddressException
 
 from cryptography.hazmat.primitives.keywrap import aes_key_unwrap, InvalidUnwrap
-from time import strftime, localtime, time
+from time import strftime, gmtime, time
 
 sbox = [0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67,
         0x2b, 0xfe, 0xd7, 0xab, 0x76, 0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59,
@@ -118,9 +118,10 @@ class GPGItem(plugins.PluginInterface):
             epoch = self.config.get("epoch")
             if epoch is None:
                 epoch = int(time())
-            epoch_start = strftime("%d %b %Y %H:%M:%S", localtime(epoch))
-            epoch_end = strftime("%d %b %Y %H:%M:%S", localtime(epoch + 0xffffff))
-            print(f"Searching from {epoch_start} to {epoch_end}")
+            epoch_start = strftime("%d %b %Y %H:%M:%S", gmtime(epoch))
+            end_epoch = (((epoch >> 24) + 1) << 24) - 1
+            epoch_end = strftime("%d %b %Y %H:%M:%S", gmtime(end_epoch))
+            print(f"Searching from {epoch_start} UTC to {epoch_end} UTC")
             byt = (epoch >> 24).to_bytes(5, "little")
             regex_pattern = b'.{3}' + byt + b'.{3}' + byt + b'\x58\x02\x00\x00'
             byteorder = "little"
